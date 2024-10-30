@@ -560,7 +560,6 @@ def fetch_new(observations: ObservationsDB, MAX_EXTRA_PAGES: int, params=None):
     """
     r = get(OBSERVATIONS_API, params)
     updated = [observations.update(o) for o in r.json()]
-    any_updated = any(updated)
 
     nextpage = r.links.get('next')
     extra_pages = MAX_EXTRA_PAGES
