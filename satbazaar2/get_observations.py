@@ -7,6 +7,7 @@ SQLite3 database.
 
 import argparse
 import os
+import sys
 
 from .observations import ObservationsDB
 from .observations import fetch_new
@@ -16,9 +17,9 @@ from .observations import retry_observer_null
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('db', metavar='observations.db',
+    parser.add_argument('db', metavar='OBSERVATIONS_DB',
                         help='Database of observations')
-    parser.add_argument('demoddata_db', metavar='demoddata.db',
+    parser.add_argument('demoddata_db', metavar='DEMODDATA_DB',
                         help='Database of demodulated frames')
     parser.add_argument('--create', action='store_true', default=False,
                         help="Create the DB if it doesn't exist")
@@ -62,15 +63,17 @@ def main():
         parameters['end'] = opts.end
 
     if not (os.path.isfile(opts.db) or opts.create):
-        raise FileNotFoundError('Database does not exist: {opts.db}')
+        print(f"Error: Cannot open observation database, no such file: '{opts.db}'")
+        sys.exit(1)
 
     if opts.demoddata_db == '':
         # Don't fetch demoddata
-        print('INFO: demoddata_db is empty, no demoddata is fetched.')
+        print('INFO: DEMODDATA_DB is empty, no telemetry frames will be fetched.')
         opts.demoddata_db = None
     else:
         if not (os.path.isfile(opts.demoddata_db) or opts.create):
-            raise FileNotFoundError('Database does not exist: {opts.demoddata_db}')
+            print(f"Error: Cannot open demoddata database, no such file: '{opts.demoddata_db}'")
+            sys.exit(1)
 
     observations = ObservationsDB(opts.db, opts.demoddata_db)
 
