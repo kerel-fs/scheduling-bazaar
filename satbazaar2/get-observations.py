@@ -8,10 +8,10 @@ SQLite3 database.
 import argparse
 import os
 
-from observations import ObservationsDB
-from observations import fetch_new
-from observations import retry_unknown
-from observations import retry_observer_null
+from .observations import ObservationsDB
+from .observations import fetch_new
+from .observations import retry_unknown
+from .observations import retry_observer_null
 
 
 parser = argparse.ArgumentParser()
@@ -93,4 +93,3 @@ if __name__ == '__main__':
         print('Cancelled by user, exiting.')
 
     # print('Finished getting new/updated obs.')
-
