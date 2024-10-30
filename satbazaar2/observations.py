@@ -506,7 +506,27 @@ class DemoddataDB(dict):
 
 
 
-def fetch_new(observations, MAX_EXTRA_PAGES, params=None):
+def fetch_new(observations: ObservationsDB, MAX_EXTRA_PAGES: int, params=None):
+    """
+    Fetches new observations from SatNOGS Network API and update observations.db
+
+    SatNOGS Network will return a page with the most recent observations,
+    then link to pages of increasingly old obs.
+
+    This method continues fetching additional pages until it encounters
+    MAX_EXTRA_PAGES consecutive pages with no updates.
+
+    Args:
+        observations: The ObservationsDB that is appeneded / updated.
+        MAX_EXTRA_PAGES (int): Maximum number of additional pages to check after finding a
+            page with no updates. Acts as a stopping condition for pagination.
+        params (dict, optional): Additional parameters to pass to the initial API request.
+            Defaults to None.
+
+    Example:
+        >>> observations = ObservationsDB("observations.db", "demoddata.db")
+        >>> fetch_new(observations, MAX_EXTRA_PAGES=3)
+    """
     r = get(OBSERVATIONS_API, params)
     updated = [observations.update(o) for o in r.json()]
     any_updated = any(updated)
