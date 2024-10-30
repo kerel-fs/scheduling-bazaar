@@ -20,6 +20,8 @@ from urllib.parse import urlparse
 import requests
 import skyfield.api
 
+from requests_ratelimiter import LimiterSession
+from pyrate_limiter import SQLiteBucket
 
 from .requests_har import log_http_request
 
@@ -30,6 +32,7 @@ from .requests_har import log_http_request
 
 OBSERVATIONS_API = 'https://network.satnogs.org/api/observations'
 LOG_RESPONSE = False
+THROTTLE_REQUESTS = True
 
 
 def print(*args):
@@ -37,7 +40,15 @@ def print(*args):
     sys.stdout.flush()
 
 
-client = requests.session()
+if THROTTLE_REQUESTS:
+    client = LimiterSession(
+        per_hour=60,
+        per_minute=5,
+        limit_statuses=[429, 500],
+        bucket_class=SQLiteBucket,
+    )
+else:
+    client = requests.Session()
 def get(url, params=None, verify_tls=True):
     print(url)
 
