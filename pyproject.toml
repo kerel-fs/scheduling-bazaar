@@ -30,6 +30,7 @@ dependencies = [
     "iso8601",
     "requests-ratelimiter",
 ]
+requires-python = ">=3.11"
 
 [project.optional-dependencies]
 dev = [
