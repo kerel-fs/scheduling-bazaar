@@ -21,13 +21,15 @@ import requests
 import skyfield.api
 
 
+from .requests_har import log_http_request
+
 
 # just for developing script
 # import requests_cache
 # requests_cache.install_cache(expire_after=60*60)
 
 OBSERVATIONS_API = 'https://network.satnogs.org/api/observations'
-
+LOG_RESPONSE = False
 
 
 def print(*args):
@@ -40,6 +42,10 @@ def get(url, params=None, verify_tls=True):
     print(url)
 
     response = client.get(url, params=params, verify=verify_tls)
+
+    if LOG_RESPONSE:
+        log_http_request(response)
+
     try:
         response.raise_for_status()
     except requests.HTTPError as err:
