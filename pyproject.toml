@@ -37,3 +37,9 @@ dev = [
 
 [project.urls]
 Repository = "https://github.com/wiredlab/scheduling-bazaar"
+
+[tool.hatch.build.targets.wheel]
+packages = ["satbazaar2"]
+
+[project.scripts]
+get-observations = "satbazaar2.get_observations:main"
