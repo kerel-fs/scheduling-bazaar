@@ -119,6 +119,8 @@ class ObservationsDB(dict):
 
         if demoddata_db is not None:
             self.demoddata = DemoddataDB(demoddata_db)
+        else:
+            self.demoddata = None
 
     def __setitem__(self, obs_id, obs_dict):
         # ensure keys exist for all DB columns
@@ -259,8 +261,11 @@ class ObservationsDB(dict):
                 self[o_id] = obs
                 was_updated = True
 
-        # Fetch the demodulated frames and store in demoddata DB
-        frames_downloaded = self.fetch_demoddata(obs)
+        if self.demoddata:
+            # Fetch the demodulated frames and store in demoddata DB
+            frames_downloaded = self.fetch_demoddata(obs)
+        else:
+            frames_downloaded = 0
 
         was_updated = was_updated or (frames_downloaded > 0)
         return was_updated

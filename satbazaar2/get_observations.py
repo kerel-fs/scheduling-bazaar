@@ -64,8 +64,13 @@ def main():
     if not (os.path.isfile(opts.db) or opts.create):
         raise FileNotFoundError('Database does not exist: {opts.db}')
 
-    if not (os.path.isfile(opts.demoddata_db) or opts.create):
-        raise FileNotFoundError('Database does not exist: {opts.demoddata_db}')
+    if opts.demoddata_db == '':
+        # Don't fetch demoddata
+        print('INFO: demoddata_db is empty, no demoddata is fetched.')
+        opts.demoddata_db = None
+    else:
+        if not (os.path.isfile(opts.demoddata_db) or opts.create):
+            raise FileNotFoundError('Database does not exist: {opts.demoddata_db}')
 
     observations = ObservationsDB(opts.db, opts.demoddata_db)
 
