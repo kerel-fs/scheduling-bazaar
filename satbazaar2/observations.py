@@ -35,11 +35,6 @@ LOG_RESPONSE = False
 THROTTLE_REQUESTS = True
 
 
-def print(*args):
-    pprint(*args)
-    sys.stdout.flush()
-
-
 if THROTTLE_REQUESTS:
     client = LimiterSession(
         per_hour=60,
@@ -288,7 +283,7 @@ class ObservationsDB(dict):
 
             if len(diff) > 0:
                 print('%i different data' % o_id)
-                print(diff)
+                pprint(diff)
                 self[o_id] = obs
                 was_updated = True
 
@@ -589,7 +584,7 @@ def fetch_new(observations: ObservationsDB, MAX_EXTRA_PAGES: int, params=None):
             extra_pages -= 1
         else:
             extra_pages = MAX_EXTRA_PAGES
-        print(extra_pages)
+        print(f'extra pages remaining: {extra_pages}')
 
 
 def iter_chunks(iterable, size):
