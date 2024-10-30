@@ -36,11 +36,25 @@ def print(*args):
 
 
 client = requests.session()
-def get(url, params=None):
-    result = client.get(url, params=params) #, verify=False)
-    print(result.url)
-    return result
+def get(url, params=None, verify_tls=True):
+    print(url)
 
+    response = client.get(url, params=params, verify=verify_tls)
+    try:
+        response.raise_for_status()
+    except requests.HTTPError as err:
+        print('ERROR: API request failed.')
+        print(f'Reason: {err}')
+        if response.status_code == requests.codes.too_many_requests:
+            # HTTP 429 Client Error: Too Many Requests for url
+            print(f"Response details: {response.json()['detail']}")
+        sys.exit(1)
+    except requests.RequestException as err:
+        print('ERROR: API request failed.')
+        print(f'Reason: {err}')
+        sys.exit(1)
+
+    return response
 
 
 class ObservationsDB(dict):
@@ -264,10 +278,10 @@ class ObservationsDB(dict):
         if self.demoddata:
             # Fetch the demodulated frames and store in demoddata DB
             frames_downloaded = self.fetch_demoddata(obs)
+            was_updated = was_updated or (frames_downloaded > 0)
         else:
             frames_downloaded = 0
 
-        was_updated = was_updated or (frames_downloaded > 0)
         return was_updated
 
     def fetch_demoddata(self, obs):
