@@ -14,46 +14,44 @@ from .observations import retry_unknown
 from .observations import retry_observer_null
 
 
-parser = argparse.ArgumentParser()
-parser.add_argument('db', metavar='observations.db',
-                    help='Database of observations')
-parser.add_argument('demoddata_db', metavar='demoddata.db',
-                    help='Database of demodulated frames')
-parser.add_argument('--create', action='store_true', default=False,
-                    help="Create the DB if it doesn't exist")
-parser.add_argument('--fetch', action=argparse.BooleanOptionalAction,
-                    dest='fetch_new', default=True,
-                    help='Fetch new observations')
-parser.add_argument('--pages', nargs=1, dest='MAX_EXTRA_PAGES',
-                    type=int, default=[50],
-                    help='Extra pages to fetch (default: %(default)s)')
-parser.add_argument('--retry-unknown',
-                    action='store_true',
-                    dest='retry_unknown', default=False,
-                    help='Retry fetching obs. with "unknown" status')
-parser.add_argument('--retry-observer',
-                    action='store_true',
-                    dest='retry_observer_null', default=False,
-                    help='Retry fetching obs. with null "observer" field')
-parser.add_argument('--reverse',
-                    action='store_true', default=False,
-                    help='Retry obs by descending ID')
-parser.add_argument('--idstart', action='store', type=int,
-                    help='First obs ID to inspect when retrying')
-parser.add_argument('--idend', action='store', type=int,
-                    help='Last obs ID to inspect when retrying')
-parser.add_argument('--start', action='store', type=str,
-                    help='Obs beginning after this datetime (RFC3339)')
-parser.add_argument('--end', action='store', type=str,
-                    help='Obs ending before this datetime (RFC3339)')
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('db', metavar='observations.db',
+                        help='Database of observations')
+    parser.add_argument('demoddata_db', metavar='demoddata.db',
+                        help='Database of demodulated frames')
+    parser.add_argument('--create', action='store_true', default=False,
+                        help="Create the DB if it doesn't exist")
+    parser.add_argument('--fetch', action=argparse.BooleanOptionalAction,
+                        dest='fetch_new', default=True,
+                        help='Fetch new observations')
+    parser.add_argument('--pages', nargs=1, dest='MAX_EXTRA_PAGES',
+                        type=int, default=[50],
+                        help='Extra pages to fetch (default: %(default)s)')
+    parser.add_argument('--retry-unknown',
+                        action='store_true',
+                        dest='retry_unknown', default=False,
+                        help='Retry fetching obs. with "unknown" status')
+    parser.add_argument('--retry-observer',
+                        action='store_true',
+                        dest='retry_observer_null', default=False,
+                        help='Retry fetching obs. with null "observer" field')
+    parser.add_argument('--reverse',
+                        action='store_true', default=False,
+                        help='Retry obs by descending ID')
+    parser.add_argument('--idstart', action='store', type=int,
+                        help='First obs ID to inspect when retrying')
+    parser.add_argument('--idend', action='store', type=int,
+                        help='Last obs ID to inspect when retrying')
+    parser.add_argument('--start', action='store', type=str,
+                        help='Obs beginning after this datetime (RFC3339)')
+    parser.add_argument('--end', action='store', type=str,
+                        help='Obs ending before this datetime (RFC3339)')
 
+    # just for developing script
+    # import requests_cache
+    # requests_cache.install_cache(expire_after=60*60)
 
-# just for developing script
-# import requests_cache
-# requests_cache.install_cache(expire_after=60*60)
-
-
-if __name__ == '__main__':
     opts = parser.parse_args()
 
     parameters = {}
