@@ -29,6 +29,8 @@ dependencies = [
     "numpy",
     "iso8601",
     "requests-ratelimiter",
+    "pyarrow>=18.0.0",
+    "fastparquet>=2024.5.0",
 ]
 requires-python = ">=3.11"
 
