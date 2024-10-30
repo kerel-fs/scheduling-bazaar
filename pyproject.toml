@@ -1,0 +1,39 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "satbazaar"
+version = "0.0.1"
+description = "A package for satellite scheduling"
+readme = "README.md"
+authors = [
+    { name = "Dan White", email = "dan.white@valpo.edu" },
+]
+license = "GPL-3.0-or-later"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering",
+]
+dependencies = [
+    "ephem",
+    "intervaltree",
+    "lxml",
+    "requests",
+    "requests-cache",
+    "skyfield",
+    "matplotlib",
+    "numpy",
+    "iso8601",
+]
+
+[project.optional-dependencies]
+dev = [
+    "jupyterlab",
+]
+
+[project.urls]
+Repository = "https://github.com/wiredlab/scheduling-bazaar"
