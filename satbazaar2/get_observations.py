@@ -8,14 +8,24 @@ SQLite3 database.
 import argparse
 import os
 import sys
+import logging
 
 from .observations import ObservationsDB
 from .observations import fetch_new
 from .observations import retry_unknown
 from .observations import retry_observer_null
 
+_print = print
+def print(*objects):
+    _print(*objects, flush=True)
+
 
 def main():
+    logging.basicConfig(
+        level="INFO",
+        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    )
+
     parser = argparse.ArgumentParser()
     parser.add_argument('db', metavar='OBSERVATIONS_DB',
                         help='Database of observations')
@@ -80,8 +90,12 @@ def main():
     try:
         if opts.fetch_new:
             pages = opts.MAX_EXTRA_PAGES[0]
-
-            fetch_new(observations, pages, params=parameters)
+            parameters = {
+                'start': '2024-10-01T02:00:00', #  greater than or equal
+                'start__lt': '2024-10-01T04:00:00', # less than
+            }
+            pages = 2
+            fetch_new(observations, MAX_EXTRA_PAGES=pages, params=parameters)
 
         if opts.retry_unknown:
             retry_unknown(observations,

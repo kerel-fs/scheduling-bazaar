@@ -20,8 +20,7 @@ from urllib.parse import urlparse
 import requests
 import skyfield.api
 
-from requests_ratelimiter import LimiterSession
-from pyrate_limiter import SQLiteBucket
+from pyrate_limiter import SQLiteBucket, Duration, Rate, Limiter, BucketFullException, LimiterDelayException
 
 from .requests_har import log_http_request
 
@@ -34,20 +33,37 @@ OBSERVATIONS_API = 'https://network.satnogs.org/api/observations'
 LOG_RESPONSE = False
 THROTTLE_REQUESTS = True
 
+_print = print
+def print(*objects):
+    _print(*objects, flush=True)
 
-if THROTTLE_REQUESTS:
-    client = LimiterSession(
-        per_hour=60,
-        per_minute=5,
-        limit_statuses=[429, 500],
-        bucket_class=SQLiteBucket,
-    )
-else:
-    client = requests.Session()
+class RequestThrottledError(Exception):
+    def __init__(self, *args, wait_remaining):
+        super().__init__(*args)
+        self.wait_remaining = wait_remaining
+
+# if THROTTLE_REQUESTS:
+#     SESSION = LimiterSession(
+#         per_hour=60,
+#         per_minute=5,
+#         limit_statuses=[429, 500],
+#         bucket_class=SQLiteBucket,
+#     )
+# else:
+SESSION = requests.Session()
 def get(url, params=None, verify_tls=True):
-    print(url)
+    print('Called: get')
+    rates = [
+        #Rate(2, Duration.MINUTE * 2),
+        Rate(30, Duration.MINUTE * 30),
+    ]
+    bucket = SQLiteBucket.init_from_file(rates)
+    limiter = Limiter(bucket, max_delay=100 * 60 * 31) # minutes
+    limiter.try_acquire('observations API')
 
-    response = client.get(url, params=params, verify=verify_tls)
+    print(f'{url} {params}')
+
+    response = SESSION.get(url, params=params, verify=verify_tls)
 
     if LOG_RESPONSE:
         log_http_request(response)
@@ -59,13 +75,16 @@ def get(url, params=None, verify_tls=True):
         print(f'Reason: {err}')
         if response.status_code == requests.codes.too_many_requests:
             # HTTP 429 Client Error: Too Many Requests for url
-            print(f"Response details: {response.json()['detail']}")
+            details = response.json()['detail']
+            print(f"Response details: {details}")
+            raise RequestThrottledError(wait_remaining=int(details.split(' ')[-2]))
         sys.exit(1)
     except requests.RequestException as err:
         print('ERROR: API request failed.')
         print(f'Reason: {err}')
         sys.exit(1)
 
+    print(f'  received {len(response.json())} items')
     return response
 
 
@@ -499,6 +518,7 @@ class DemoddataDB(dict):
                 try:
                     gs_sat_pos = self._setup_tracking(observation)
                 except ValueError as e:
+                    print('ValueError')
                     print(e)
                     tle0 = observation['tle0']
                     tle1 = observation['tle1']
@@ -559,14 +579,39 @@ def fetch_new(observations: ObservationsDB, MAX_EXTRA_PAGES: int, params=None):
         >>> observations = ObservationsDB("observations.db", "demoddata.db")
         >>> fetch_new(observations, MAX_EXTRA_PAGES=3)
     """
-    r = get(OBSERVATIONS_API, params)
+    try:
+        r = get(OBSERVATIONS_API, params)
+    except (BucketFullException, LimiterDelayException):
+        sys.exit(1)
+    except RequestThrottledError as err:
+        print(err)
+        sys.exit(1)
+
     updated = [observations.update(o) for o in r.json()]
 
     nextpage = r.links.get('next')
     extra_pages = MAX_EXTRA_PAGES
 
     while (extra_pages > 0) and nextpage:
-        r = get(nextpage['url'])
+        try:
+            r = get(nextpage['url'])
+        except LimiterDelayException as err:
+            print(err.meta_info['rate'])
+            print('Wait 30 seconds...')
+            time.sleep(30)
+            continue
+        except BucketFullException as err:
+            print(err.meta_info['max_delay'])
+            actual_delay = err.meta_info['actual_delay'] * 1e-3
+            print(f'Wait {actual_delay} seconds...')
+            time.sleep(actual_delay)
+            continue
+        except RequestThrottledError as err:
+            print('Rate limited!')
+            print('Wait {err.wait_remaining + 10} seconds...')
+            time.sleep(err.wait_remaining + 10)
+            continue
+
         # network-dev returns a 500 server error at some point 350+ pages in
         # try:
         updated = [observations.update(o) for o in r.json()]
@@ -576,6 +621,9 @@ def fetch_new(observations: ObservationsDB, MAX_EXTRA_PAGES: int, params=None):
             # raise e
 
         nextpage = r.links.get('next')
+        if not nextpage:
+            print('Fetched all pages, exit.')
+            sys.exit(0)
 
         # heuristic to capture recent updates to observations
         # keep fetching pages of observations until we see
